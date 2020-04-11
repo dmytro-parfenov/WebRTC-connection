@@ -9,3 +9,7 @@ body {
   max-width: 300px;
   max-height: 150px;
 }
+
+section video {
+  max-width: 100%;
+}

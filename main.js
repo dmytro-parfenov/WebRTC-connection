@@ -4,7 +4,7 @@ const remoteVideosSection = document.querySelector('section');
 const peerConnections = [];
 let localStream = null;
 
-const socket = new WebSocket('ws://localhost:8080');
+const socket = new WebSocket(`wss://${location.hostname}:8080`);
 
 getUserMedia().then(stream => {
     myVideo.srcObject = stream;
@@ -19,8 +19,6 @@ socket.onmessage = ev => {
     console.log(data);
 
     switch (data.type) {
-        case 'ClientConnected':
-            return onClientConnected(data.context);
         case 'ClientDisconnected':
             return onClientDisconnected(data.context);
         case 'Offer':
@@ -39,7 +37,7 @@ function getUserMedia() {
         return Promise.resolve(localStream);
     }
 
-    return navigator.mediaDevices.getUserMedia({video: true, audio: false}).then(stream => {
+    return navigator.mediaDevices.getUserMedia({video: true, audio: true}).then(stream => {
         localStream = stream;
         return stream;
     });
@@ -49,16 +47,20 @@ function createPeerConnection(id) {
     const peerConnection = new RTCPeerConnection();
     peerConnections.push({id, connection: peerConnection});
 
+    const remoteVideo = document.createElement('video');
+    remoteVideo.autoplay = true;
+    remoteVideo.setAttribute('data-client', id);
+
     peerConnection.ontrack = ev => {
-        if (!ev.streams.length) {
+        if (!ev.streams.length || remoteVideo.srcObject === ev.streams[0]) {
             return;
         }
 
-        const remoteVideo = document.createElement('video');
-
-        remoteVideo.autoplay = true;
         remoteVideo.srcObject = ev.streams[0];
-        remoteVideo.setAttribute('data-client', id);
+
+        if (getClientVideoElement(id)) {
+            return;
+        }
 
         remoteVideosSection.appendChild(remoteVideo);
     };
@@ -147,28 +149,9 @@ function onOffer(event) {
     });
 }
 
-function onClientConnected(client) {
-    /*getUserMedia().then(stream => {
-        const peerConnection = createPeerConnection(client);
-
-        stream.getTracks().forEach(track => {
-            peerConnection.addTrack(track, stream);
-        });
-
-        peerConnection.createOffer({offerToReceiveVideo: true, offerToReceiveAudio: true}).then(offer => {
-            return peerConnection.setLocalDescription(new RTCSessionDescription(offer)).then(() => offer);
-        }).then(offer => {
-            sendMessage({
-                type: 'Offer',
-                context: {data: offer, to: client}
-            });
-        });
-    });*/
-}
-
 function onClientDisconnected(client) {
     const indexOf = peerConnections.findIndex(peerConnection => peerConnection.id === client);
-    const element = document.querySelector(`[data-client=\'${client}\']`);
+    const element = getClientVideoElement(client);
 
     if (indexOf >= 0) {
         peerConnections[indexOf].connection.close();
@@ -178,4 +161,8 @@ function onClientDisconnected(client) {
     if (element) {
         element.remove();
     }
+}
+
+function getClientVideoElement(client) {
+    return document.querySelector(`[data-client=\'${client}\']`);
 }

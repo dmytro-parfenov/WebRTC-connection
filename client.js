@@ -1,12 +1,31 @@
 const express = require('express');
 const path = require('path');
+const https = require('https');
+const fs = require('fs');
 
-const app = express();
+const PORT_HTTP = 3000;
+const PORT_HTTPS = 3001;
+const credentials = {
+    key: fs.readFileSync('./ssl/key.pem'),
+    cert: fs.readFileSync('./ssl/certificate.pem')
+};
 
-app.use(express.static(path.join(__dirname)));
+const appHttps = express();
 
-app.get('/', function (req, res) {
+appHttps.use(express.static(path.join(__dirname)));
+
+appHttps.get('/', function (req, res) {
     res.sendFile(path.join(__dirname + '/index.html'));
 });
 
-app.listen(4200);
+const serverHttps = https.createServer(credentials, appHttps);
+
+serverHttps.listen(PORT_HTTPS);
+
+var appHttp = express();
+
+appHttp.get('*', function(req, res) {
+    res.redirect(`https://${req.hostname}:${PORT_HTTPS}`);
+});
+
+appHttp.listen(PORT_HTTP);

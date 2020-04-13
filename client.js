@@ -1,13 +1,9 @@
 const express = require('express');
 const path = require('path');
 const https = require('https');
-const fs = require('fs');
+const ssl = require('./ssl');
 
 const PORT = 3000;
-const credentials = {
-    key: fs.readFileSync('./ssl/key.pem'),
-    cert: fs.readFileSync('./ssl/certificate.pem')
-};
 
 const app = express();
 
@@ -17,7 +13,7 @@ app.get('/', function (req, res) {
     res.sendFile(path.join(__dirname + '/index.html'));
 });
 
-const server = https.createServer(credentials, app);
+const server = https.createServer(ssl.credentials, app);
 
 server.listen(PORT, () => {
     console.log(`Client is listening on https://localhost:${PORT}`);

@@ -1,15 +1,11 @@
 const ws = require('ws');
 const uuid = require('uuid');
 const https = require('https');
-const fs = require('fs');
+const ssl = require('./ssl');
 
 const PORT = 8080;
-const credentials = {
-    key: fs.readFileSync('./ssl/key.pem'),
-    cert: fs.readFileSync('./ssl/certificate.pem')
-};
 
-const server = https.createServer(credentials);
+const server = https.createServer(ssl.credentials);
 const wss = new ws.Server({server});
 
 wss.on('connection', socket => {

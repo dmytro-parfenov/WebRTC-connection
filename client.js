@@ -3,29 +3,22 @@ const path = require('path');
 const https = require('https');
 const fs = require('fs');
 
-const PORT_HTTP = 3000;
-const PORT_HTTPS = 3001;
+const PORT = 3000;
 const credentials = {
     key: fs.readFileSync('./ssl/key.pem'),
     cert: fs.readFileSync('./ssl/certificate.pem')
 };
 
-const appHttps = express();
+const app = express();
 
-appHttps.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname)));
 
-appHttps.get('/', function (req, res) {
+app.get('/', function (req, res) {
     res.sendFile(path.join(__dirname + '/index.html'));
 });
 
-const serverHttps = https.createServer(credentials, appHttps);
+const server = https.createServer(credentials, app);
 
-serverHttps.listen(PORT_HTTPS);
-
-var appHttp = express();
-
-appHttp.get('*', function(req, res) {
-    res.redirect(`https://${req.hostname}:${PORT_HTTPS}`);
+server.listen(PORT, () => {
+    console.log(`Client is listening on https://localhost:${PORT}`);
 });
-
-appHttp.listen(PORT_HTTP);

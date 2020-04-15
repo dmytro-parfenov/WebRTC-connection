@@ -8,3 +8,7 @@ into `ssl.js` module.
 - Commands to run server and client are located 
 in `packaje.json` file.
 
+###### Useful links:
+- https://webrtc.org/
+- https://webrtc.github.io/samples/
+

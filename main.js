@@ -4,7 +4,7 @@ const remoteVideosSection = document.querySelector('section');
 const peerConnections = [];
 let localStream = null;
 
-const socket = new WebSocket(`wss://${location.hostname}:8080`);
+const socket = new WebSocket(`//${location.hostname}:8080`);
 
 getUserMedia().then(stream => {
     myVideo.srcObject = stream;
@@ -16,7 +16,6 @@ socket.onmessage = ev => {
     }
 
     const data = JSON.parse(ev.data);
-    console.log(data);
 
     switch (data.type) {
         case 'ClientDisconnected':
@@ -67,8 +66,7 @@ function createPeerConnection(id) {
 
     peerConnection.onicecandidate = ev => {
         sendMessage({
-            type: 'IceCandidate',
-            context: {to: id, data: ev.candidate}
+            type: 'IceCandidate', context: {to: id, data: ev.candidate}
         })
     };
 
@@ -96,8 +94,7 @@ function onClients(clients) {
                 return peerConnection.setLocalDescription(new RTCSessionDescription(offer)).then(() => offer);
             }).then(offer => {
                 sendMessage({
-                    type: 'Offer',
-                    context: {data: offer, to: client}
+                    type: 'Offer', context: {data: offer, to: client}
                 });
             });
         });
@@ -142,8 +139,7 @@ function onOffer(event) {
             return peerConnection.setLocalDescription(answer).then(() => answer)
         }).then(answer => {
             sendMessage({
-                type: 'Answer',
-                context: {data: answer, to: event.from}
+                type: 'Answer', context: {data: answer, to: event.from}
             });
         });
     });

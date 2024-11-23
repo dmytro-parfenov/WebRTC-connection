@@ -4,7 +4,7 @@ const remoteVideosSection = document.querySelector('section');
 const peerConnections = [];
 let localStream = null;
 
-const socket = new WebSocket(`//${location.hostname}:8080`);
+const socket = new WebSocket(`//webrtc-happy-chimpunk-62.deno.dev`);
 
 getUserMedia().then(stream => {
     myVideo.srcObject = stream;

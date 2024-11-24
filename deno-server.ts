@@ -5,9 +5,6 @@ type Client = {
 
 const clients = new Set<Client>();
 
-const broadcast = (...args: Parameters<WebSocket["send"]>) =>
-    clients.forEach(({ socket }) => socket.send(...args));
-
 Deno.serve({
     port: 8080,
     handler: (req) => {
@@ -22,11 +19,6 @@ Deno.serve({
         const client = { id: crypto.randomUUID(), socket };
 
         socket.addEventListener("open", () => {
-            broadcast(JSON.stringify({
-                type: "ClientConnected",
-                context: client.id,
-            }));
-
             const clientIds = Array.from(clients).map(({ id }) => id);
 
             socket.send(JSON.stringify({
@@ -40,10 +32,12 @@ Deno.serve({
         socket.addEventListener("close", () => {
             clients.delete(client);
 
-            broadcast(JSON.stringify({
-                type: "ClientDisconnected",
-                context: client.id,
-            }));
+            clients.forEach(({ socket }) =>
+                socket.send(JSON.stringify({
+                    type: "ClientDisconnected",
+                    context: client.id,
+                }))
+            );
         });
 
         socket.addEventListener(
@@ -55,8 +49,8 @@ Deno.serve({
                     };
 
                     const receiver = clients.values().find((
-                        { id: receiverId },
-                    ) => receiverId === data.context.to);
+                        { id },
+                    ) => id === data.context.to);
 
                     receiver?.socket.send(JSON.stringify({
                         ...data,

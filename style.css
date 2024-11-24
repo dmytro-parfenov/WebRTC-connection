@@ -2,6 +2,10 @@
     --grid-multiplier: 1;
 }
 
+html, body {
+    height: 100%;
+}
+
 body {
     margin: 0;
 }
@@ -13,13 +17,11 @@ video {
 
 #my-video {
     position: fixed;
-    border-radius: 50%;
+    border-radius: 8px;
     left: 50%;
     transform: translateX(-50%);
     bottom: 8px;
-    height: 23vh;
-    aspect-ratio: 1/1;
-    object-fit: cover;
+    height: 23%;
 }
 
 section {
@@ -28,18 +30,11 @@ section {
     justify-content: center;
     flex-wrap: wrap;
     gap: 8px;
-    height: 75vh;
+    height: 75%;
 }
 
 section video {
     border-radius: 8px;
-    width: calc((100vw - 8px * var(--grid-multiplier)) / var(--grid-multiplier));
-    height: calc((75vh - 8px * var(--grid-multiplier)) / var(--grid-multiplier));
-}
-
-@media (orientation: landscape) {
-}
-
-@media (orientation: portrait) {
-
+    width: calc((100% - 8px * var(--grid-multiplier)) / var(--grid-multiplier));
+    height: calc((100% - 8px * var(--grid-multiplier)) / var(--grid-multiplier));
 }

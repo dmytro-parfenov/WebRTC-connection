@@ -69,8 +69,6 @@ Deno.serve({
             },
         );
 
-        socket.addEventListener("error", console.error);
-
         return response;
     },
 });

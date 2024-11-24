@@ -62,6 +62,8 @@ function createPeerConnection(id) {
         }
 
         remoteVideosSection.appendChild(remoteVideo);
+
+        updateGridMultiplier();
     };
 
     peerConnection.onicecandidate = ev => {
@@ -156,9 +158,17 @@ function onClientDisconnected(client) {
 
     if (element) {
         element.remove();
+        updateGridMultiplier();
     }
 }
 
 function getClientVideoElement(client) {
     return document.querySelector(`[data-client=\'${client}\']`);
+}
+
+function updateGridMultiplier() {
+    const sqrt = Math.sqrt(remoteVideosSection.children.length);
+    const gridMultiplier = sqrt % 1 > 0 ? Math.ceil(sqrt) : sqrt;
+
+    remoteVideosSection.style.setProperty("--grid-multiplier", gridMultiplier);
 }

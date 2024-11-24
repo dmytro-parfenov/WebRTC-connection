@@ -1,33 +1,35 @@
-const myVideo = document.querySelector('#my-video');
-const remoteVideosSection = document.querySelector('section');
+const videoElement = document.querySelector('#video');
+
+const remoteVideosElement = document.querySelector('section');
 
 const peerConnections = [];
+
 let localStream = null;
 
 const socket = new WebSocket(`//webrtc-happy-chimpunk-62.deno.dev`);
 
 getUserMedia().then(stream => {
-    myVideo.srcObject = stream;
+    videoElement.srcObject = stream;
 });
 
 socket.onmessage = ev => {
-    if (typeof ev.data !== "string") {
-        return;
-    }
+    try {
+        const data = JSON.parse(ev.data);
 
-    const data = JSON.parse(ev.data);
-
-    switch (data.type) {
-        case 'ClientDisconnected':
-            return onClientDisconnected(data.context);
-        case 'Offer':
-            return onOffer(data.context);
-        case 'Answer':
-            return onAnswer(data.context);
-        case 'IceCandidate':
-            return onIceCandidate(data.context);
-        case 'Clients':
-            return onClients(data.context);
+        switch (data.type) {
+            case 'ClientDisconnected':
+                return onClientDisconnected(data.context);
+            case 'Offer':
+                return onOffer(data.context);
+            case 'Answer':
+                return onAnswer(data.context);
+            case 'IceCandidate':
+                return onIceCandidate(data.context);
+            case 'Clients':
+                return onClients(data.context);
+        }
+    } catch (error) {
+        console.error(error);
     }
 };
 
@@ -38,6 +40,7 @@ function getUserMedia() {
 
     return navigator.mediaDevices.getUserMedia({video: true, audio: true}).then(stream => {
         localStream = stream;
+
         return stream;
     });
 }
@@ -51,19 +54,21 @@ function createPeerConnection(id) {
     remoteVideo.setAttribute('data-client', id);
 
     peerConnection.ontrack = ev => {
-        if (!ev.streams.length || remoteVideo.srcObject === ev.streams[0]) {
+        const stream = ev.streams[0];
+
+        if (remoteVideo.srcObject === stream) {
             return;
         }
 
-        remoteVideo.srcObject = ev.streams[0];
+        remoteVideo.srcObject = stream;
 
-        if (getClientVideoElement(id)) {
+        if (queryRemoteVideoElement(id)) {
             return;
         }
 
-        remoteVideosSection.appendChild(remoteVideo);
+        remoteVideosElement.appendChild(remoteVideo);
 
-        updateGridMultiplier();
+        updateRemoteVideosGridMultiplier();
     };
 
     peerConnection.onicecandidate = ev => {
@@ -80,10 +85,6 @@ function sendMessage(data) {
 }
 
 function onClients(clients) {
-    if (!clients.length) {
-        return;
-    }
-
     getUserMedia().then(stream => {
         clients.forEach(client => {
             const peerConnection = createPeerConnection(client);
@@ -104,27 +105,15 @@ function onClients(clients) {
 }
 
 function onIceCandidate(event) {
-    if (!event.data) {
-        return;
-    }
-
     const peerConnection = peerConnections.find(connection => connection.id === event.from);
 
-    if (!peerConnection) {
-        return;
-    }
-
-    return peerConnection.connection.addIceCandidate(event.data);
+    return peerConnection?.connection.addIceCandidate(event.data);
 }
 
 function onAnswer(event) {
     const peerConnection = peerConnections.find(connection => connection.id === event.from);
 
-    if (!peerConnection) {
-        return;
-    }
-
-    return peerConnection.connection.setRemoteDescription(event.data);
+    return peerConnection?.connection.setRemoteDescription(event.data);
 }
 
 function onOffer(event) {
@@ -148,27 +137,29 @@ function onOffer(event) {
 }
 
 function onClientDisconnected(client) {
-    const indexOf = peerConnections.findIndex(peerConnection => peerConnection.id === client);
-    const element = getClientVideoElement(client);
+    const peerConnectionIndex = peerConnections.findIndex(peerConnection => peerConnection.id === client);
 
-    if (indexOf >= 0) {
-        peerConnections[indexOf].connection.close();
-        peerConnections.splice(indexOf, 1);
+    if (peerConnectionIndex < 0) {
+        return;
     }
 
-    if (element) {
-        element.remove();
-        updateGridMultiplier();
-    }
+    peerConnections[peerConnectionIndex]?.connection.close();
+
+    peerConnections.splice(peerConnectionIndex, 1);
+
+    queryRemoteVideoElement(client)?.remove();
+
+    updateRemoteVideosGridMultiplier();
 }
 
-function getClientVideoElement(client) {
+function queryRemoteVideoElement(client) {
     return document.querySelector(`[data-client=\'${client}\']`);
 }
 
-function updateGridMultiplier() {
-    const sqrt = Math.sqrt(remoteVideosSection.children.length);
-    const gridMultiplier = sqrt % 1 > 0 ? Math.ceil(sqrt) : sqrt;
+function updateRemoteVideosGridMultiplier() {
+    const remoteVideosLengthSqrt = Math.sqrt(remoteVideosElement.children.length);
 
-    remoteVideosSection.style.setProperty("--grid-multiplier", gridMultiplier);
+    const gridMultiplier = remoteVideosLengthSqrt % 1 > 0 ? Math.ceil(remoteVideosLengthSqrt) : remoteVideosLengthSqrt;
+
+    remoteVideosElement.style.setProperty("--grid-multiplier", gridMultiplier.toString(10));
 }

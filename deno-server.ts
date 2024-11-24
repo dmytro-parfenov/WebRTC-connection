@@ -19,6 +19,8 @@ Deno.serve({
         const client = { id: crypto.randomUUID(), socket };
 
         socket.addEventListener("open", () => {
+            console.debug(`Client connected: ${client.id}`);
+
             const clientIds = Array.from(clients).map(({ id }) => id);
 
             socket.send(JSON.stringify({
@@ -30,6 +32,8 @@ Deno.serve({
         });
 
         socket.addEventListener("close", () => {
+            console.debug(`Client disconnected: ${client.id}`);
+
             clients.delete(client);
 
             clients.forEach(({ socket }) =>
@@ -64,6 +68,8 @@ Deno.serve({
                 }
             },
         );
+
+        socket.addEventListener("error", console.error);
 
         return response;
     },

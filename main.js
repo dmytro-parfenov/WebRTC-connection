@@ -51,6 +51,7 @@ function createPeerConnection(id) {
 
     const remoteVideo = document.createElement('video');
     remoteVideo.autoplay = true;
+    remoteVideo.controls = true;
     remoteVideo.setAttribute('data-client', id);
 
     peerConnection.ontrack = ev => {
